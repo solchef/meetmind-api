@@ -1,0 +1,186 @@
+// use prisma-8
+
+enum MeetingStatus {
+  SCHEDULED
+  UPLOADING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum ActionItemStatus {
+  TODO
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+model User {
+  id            Int               @id @default(autoincrement())
+  email         String            @unique
+  name          String?
+  createdAt     TimestamptzString @default(now())
+  updatedAt     temporal.updatedAtString()
+
+  memberships   WorkspaceMember[]
+  meetings      Meeting[]         @relation("MeetingCreator")
+  actionItems   ActionItem[]      @relation("ActionItemAssignee")
+}
+
+model Workspace {
+  id            Int               @id @default(autoincrement())
+  name          String
+  createdAt     TimestamptzString @default(now())
+  updatedAt     temporal.updatedAtString()
+
+  members       WorkspaceMember[]
+  meetings      Meeting[]
+}
+
+model WorkspaceMember {
+  id            Int       @id @default(autoincrement())
+  workspace     Workspace @relation(fields: [workspaceId], references: [id])
+  workspaceId   Int
+  user          User      @relation(fields: [userId], references: [id])
+  userId        Int
+  createdAt     TimestamptzString @default(now())
+
+  @@unique([workspaceId, userId])
+}
+
+model Meeting {
+  id            Int           @id @default(autoincrement())
+  title         String
+  description   String?
+  status        MeetingStatus @default(SCHEDULED)
+
+  workspace     Workspace     @relation(fields: [workspaceId], references: [id])
+  workspaceId   Int
+
+  creator       User          @relation("MeetingCreator", fields: [creatorId], references: [id])
+  creatorId     Int
+
+  startedAt     TimestamptzString?
+  endedAt       TimestamptzString?
+  audioUrl      String?
+
+  createdAt     TimestamptzString @default(now())
+  updatedAt     temporal.updatedAtString()
+
+  participants  Participant[]
+  transcript    TranscriptSegment[]
+  summary       MeetingSummary?
+  decisions     Decision[]
+  actionItems   ActionItem[]
+  risks         Risk[]
+  openQuestions OpenQuestion[]
+  topics        Topic[]
+}
+
+model Participant {
+  id            Int       @id @default(autoincrement())
+  name          String
+  email         String?
+
+  meeting       Meeting   @relation(fields: [meetingId], references: [id])
+  meetingId     Int
+
+  transcript    TranscriptSegment[]
+}
+
+model TranscriptSegment {
+  id            Int         @id @default(autoincrement())
+  meeting       Meeting     @relation(fields: [meetingId], references: [id])
+  meetingId     Int
+
+  participant   Participant? @relation(fields: [participantId], references: [id])
+  participantId Int?
+
+  startTimeMs   Int
+  endTimeMs     Int
+  text          String
+
+  createdAt     TimestamptzString @default(now())
+}
+
+model MeetingSummary {
+  id            Int       @id @default(autoincrement())
+  meeting       Meeting   @relation(fields: [meetingId], references: [id])
+  meetingId     Int       @unique
+
+  summary       String
+
+  createdAt     TimestamptzString @default(now())
+  updatedAt     temporal.updatedAtString()
+}
+
+model Decision {
+  id            Int       @id @default(autoincrement())
+  meeting       Meeting   @relation(fields: [meetingId], references: [id])
+  meetingId     Int
+
+  title         String
+  description   String?
+  timestampMs   Int?
+
+  createdAt     TimestamptzString @default(now())
+}
+
+model ActionItem {
+  id            Int                @id @default(autoincrement())
+  meeting       Meeting            @relation(fields: [meetingId], references: [id])
+  meetingId     Int
+
+  title         String
+  description   String?
+
+  assignee      User?              @relation("ActionItemAssignee", fields: [assigneeId], references: [id])
+  assigneeId    Int?
+
+  dueDate       TimestamptzString?
+  priority      Priority           @default(MEDIUM)
+  status        ActionItemStatus   @default(TODO)
+  timestampMs   Int?
+
+  createdAt     TimestamptzString  @default(now())
+  updatedAt     temporal.updatedAtString()
+}
+
+model Risk {
+  id            Int       @id @default(autoincrement())
+  meeting       Meeting   @relation(fields: [meetingId], references: [id])
+  meetingId     Int
+
+  title         String
+  description   String?
+  timestampMs   Int?
+
+  createdAt     TimestamptzString @default(now())
+}
+
+model OpenQuestion {
+  id            Int       @id @default(autoincrement())
+  meeting       Meeting   @relation(fields: [meetingId], references: [id])
+  meetingId     Int
+
+  question      String
+  timestampMs   Int?
+
+  createdAt     TimestamptzString @default(now())
+}
+
+model Topic {
+  id            Int       @id @default(autoincrement())
+  meeting       Meeting   @relation(fields: [meetingId], references: [id])
+  meetingId     Int
+
+  name          String
+  createdAt     TimestamptzString @default(now())
+}

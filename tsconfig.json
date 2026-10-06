@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "module": "preserve",
+    "moduleResolution": "bundler",
+    "target": "ES2023",
+    "resolvePackageJsonExports": true,
+
+    "esModuleInterop": true,
+    "isolatedModules": true,
+
+    "declaration": true,
+    "removeComments": true,
+
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
+
+    "sourceMap": true,
+    "outDir": "./dist",
+    "incremental": true,
+
+    "skipLibCheck": true,
+    "strict": true,
+    "strictPropertyInitialization": false,
+
+    "types": ["node", "vitest/globals"],
+    "resolveJsonModule": true
+  }
+}
