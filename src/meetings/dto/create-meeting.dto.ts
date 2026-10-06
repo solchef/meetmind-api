@@ -11,7 +11,4 @@ export class CreateMeetingDto {
 
   @IsInt()
   workspaceId!: number;
-
-  @IsInt()
-  creatorId!: number;
 }

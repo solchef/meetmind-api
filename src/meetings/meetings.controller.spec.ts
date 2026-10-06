@@ -1,46 +1,31 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  ParseIntPipe,
-  Patch,
-  Post,
-} from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
+import { MeetingsController } from './meetings.controller';
 import { MeetingsService } from './meetings.service';
-import { CreateMeetingDto } from './dto/create-meeting.dto';
-import { UpdateMeetingDto } from './dto/update-meeting.dto';
 
-@Controller('meetings')
-export class MeetingsController {
-  constructor(private readonly meetingsService: MeetingsService) {}
+describe('MeetingsController', () => {
+  let controller: MeetingsController;
 
-  @Post()
-  create(@Body() dto: CreateMeetingDto) {
-    return this.meetingsService.create(dto);
-  }
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      controllers: [MeetingsController],
+      providers: [
+        {
+          provide: MeetingsService,
+          useValue: {
+            create: vi.fn(),
+            findAll: vi.fn(),
+            findOne: vi.fn(),
+            update: vi.fn(),
+            remove: vi.fn(),
+          },
+        },
+      ],
+    }).compile();
 
-  @Get()
-  findAll() {
-    return this.meetingsService.findAll();
-  }
+    controller = module.get<MeetingsController>(MeetingsController);
+  });
 
-  @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.meetingsService.findOne(id);
-  }
-
-  @Patch(':id')
-  update(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() dto: UpdateMeetingDto,
-  ) {
-    return this.meetingsService.update(id, dto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.meetingsService.remove(id);
-  }
-}
+  it('should be defined', () => {
+    expect(controller).toBeDefined();
+  });
+});
