@@ -6,6 +6,7 @@ import { DatabaseModule } from './database/database.module';
 import { MeetingsModule } from './meetings/meetings.module';
 import { AuthModule } from './auth/auth.module';
 import { WorkspacesModule } from './workspaces/workspaces.module';
+import { TranscriptionModule } from './transcription/transcription.module';
 
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
@@ -23,7 +24,7 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
     MeetingsModule,
     AuthModule,
     WorkspacesModule,
-  ],
+    TranscriptionModule,  ],
   controllers: [AppController],
   providers: [AppService],
 })

@@ -14,6 +14,8 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { Request } from 'express';
+import { diskStorage } from 'multer';
+import { randomUUID } from 'node:crypto';
 
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { MeetingsService } from './meetings.service';
@@ -88,6 +90,18 @@ end(
 @Post(':id/audio')
 @UseInterceptors(
   FileInterceptor('file', {
+    storage: diskStorage({
+      destination: './uploads/meetings',
+      filename: (_req, file, callback) => {
+        const extension =
+          file.originalname.split('.').pop() || 'audio';
+
+        callback(
+          null,
+          `${randomUUID()}.${extension}`,
+        );
+      },
+    }),
     limits: {
       fileSize: 100 * 1024 * 1024,
     },
@@ -111,6 +125,29 @@ uploadAudio(
   return this.meetingsService.uploadAudio(
     id,
     file,
+    req.user.id,
+  );
+}
+
+@Post(':id/transcribe')
+transcribe(
+  @Param('id', ParseIntPipe) id: number,
+  @Req() req: AuthenticatedRequest,
+) {
+  return this.meetingsService.transcribe(
+    id,
+    req.user.id,
+  );
+}
+
+
+@Get(':id/transcript')
+getTranscript(
+  @Param('id', ParseIntPipe) id: number,
+  @Req() req: AuthenticatedRequest,
+) {
+  return this.meetingsService.getTranscript(
+    id,
     req.user.id,
   );
 }

@@ -11,13 +11,18 @@ import { join } from 'node:path';
 import { randomUUID } from 'node:crypto'; import { DatabaseService } from '../database/database.service';
 import { CreateMeetingDto } from './dto/create-meeting.dto';
 import { UpdateMeetingDto } from './dto/update-meeting.dto';
+import { TranscriptionService } from '../transcription/transcription.service';
+
 
 @Injectable()
 export class MeetingsService {
   private readonly meeting;
   private readonly workspaceMember;
 
-  constructor(private readonly database: DatabaseService) {
+  constructor(
+    private readonly database: DatabaseService,
+    private readonly transcriptionService: TranscriptionService,
+) {
     this.meeting = this.database.db.orm.public.Meeting;
     this.workspaceMember = this.database.db.orm.public.WorkspaceMember;
   }
@@ -214,5 +219,64 @@ export class MeetingsService {
         status: 'PROCESSING',
       });
   }
+
+async transcribe(id: number, userId: number) {
+  const meeting = await this.findOne(id, userId);
+
+  if (!meeting.audioUrl) {
+    throw new BadRequestException(
+      'Meeting does not have an audio file',
+    );
+  }
+
+  const filePath = join(
+    process.cwd(),
+    meeting.audioUrl.replace(/^\//, ''),
+  );
+
+  const transcription =
+    await this.transcriptionService.transcribe(filePath);
+
+  const transcriptSegment =
+    this.database.db.orm.public.TranscriptSegment;
+
+  // Remove existing transcript segments so the operation
+  // can safely be retried.
+  await transcriptSegment
+    .where({ meetingId: id })
+    .deleteAll();
+
+  const segments = transcription.segments ?? [];
+
+  for (const segment of segments) {
+    await transcriptSegment.create({
+      meetingId: id,
+      startTimeMs: Math.round(segment.start * 1000),
+      endTimeMs: Math.round(segment.end * 1000),
+      text: segment.text.trim(),
+    });
+  }
+
+  return {
+    meetingId: id,
+    segmentCount: segments.length,
+    status: 'saved',
+  };
+}
+
+async getTranscript(id: number, userId: number) {
+  await this.findOne(id, userId);
+
+  const transcriptSegment =
+    this.database.db.orm.public.TranscriptSegment;
+
+const segments = await transcriptSegment
+  .where({ meetingId: id })
+  .all();
+
+return segments.sort(
+  (a, b) => a.startTimeMs - b.startTimeMs,
+);
+}
 
 }
